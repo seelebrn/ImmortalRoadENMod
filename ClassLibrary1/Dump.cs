@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UVExtractor.Il2Cpp;
 using System.IO;
 using AssetsTools.NET.Cpp2IL;
 using Il2CppSystem.Linq.Expressions;
@@ -71,7 +70,7 @@ namespace TranslationENMOD
                             if (x.FieldName == "m_Text")
                             {
                                 Plugin.log.LogInfo("Found a string in ... " + file.ToString());
-                                x.AsString = Helpers.AddItemToList(x.AsString, "UITextKV");
+                                x.AsString = Helpers.AddItemToListUI(x.AsString, "UITextKV");
                             }
 
                         }
@@ -137,7 +136,6 @@ namespace TranslationENMOD
                             if (x.FieldName == "m_Text")
                             {
                                 Plugin.log.LogInfo("Found a string in bundle ... " + file.ToString());
-                                x.AsString = Helpers.AddItemToList(x.AsString, "UITextKV");
                             }
 
                         }

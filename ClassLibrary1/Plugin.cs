@@ -46,6 +46,7 @@ using static Octree.OctreeElement;
 using Cpp2IlInjected;
 using static Il2CppSystem.Net.WebCompletionSource;
 using UnityEngine.UI;
+using Il2CppSystem.Resources;
 
 namespace TranslationENMOD
 {
@@ -99,6 +100,7 @@ namespace TranslationENMOD
         }
         public override void Load()
         {
+
             if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "Dump", "TAKV.txt")))
             {
                 File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "Dump", "TAKV.txt"));
@@ -110,7 +112,7 @@ namespace TranslationENMOD
             BepInEx.Logging.Logger.Sources.Add(log);
             TADict = FileToDictionary("TAKV.txt");
             UITextDict = FileToDictionary("UITextKV.txt");
-
+            AddComponent<mbmb>();
             Plugin.log.LogInfo("Running Harmony Patches...");
             var harmony = new Harmony("Cadenza.GAME.ENMOD");
             Harmony.CreateAndPatchAll(System.Reflection.Assembly.GetExecutingAssembly(), null);
@@ -236,13 +238,14 @@ namespace TranslationENMOD
    
         }*/
 
-    [HarmonyPatch(typeof(RectTransform), "ForceUpdateRectTransforms")]
-    class Patch_RectTransform
+
+    [HarmonyPatch(typeof(ResourceReader), "LoadString")]
+    class Patch_ResourceReader
     {
-        static void Postfix(RectTransform __instance)
+        static void Postfix(ResourceReader __instance, ref string __result)
         {
 
-
+            Plugin.log.LogInfo(__result);
 
         }
     }
@@ -296,7 +299,7 @@ namespace TranslationENMOD
                                             var value = obj[i].ToString().Replace("\"", "");
                                             if (value == "八卦丹丹方")
                                             {
-                                                Plugin.log.LogInfo("Found !");
+                                                //Plugin.log.LogInfo("Found !");
                                                 check = true;
 
                                             }
@@ -304,13 +307,13 @@ namespace TranslationENMOD
                                             if (Plugin.TADict.ContainsKey(value))
                                             {
                                                 obj[i] = Plugin.TADict[value];
-                                                Plugin.log.LogInfo("Replacement Found ! " + Plugin.TADict[value]);
+                                                //Plugin.log.LogInfo("Replacement Found ! " + Plugin.TADict[value]);
                                             }
                                             else
                                             {
                                                 if (!value.Contains("土之窍穴-") && !value.Contains("金之窍穴-") && !value.Contains("木之窍穴-") && !value.Contains("火之窍穴-") && !value.Contains("水之窍穴-"))
                                                 {
-                                                    Plugin.log.LogInfo("Writing line to TAUn : " + value);
+                                                    //Plugin.log.LogInfo("Writing line to TAUn : " + value);
                                                     Helpers.AddItemToList(value, "TAKV");
                                                 }
                                             }
@@ -422,11 +425,11 @@ namespace TranslationENMOD
 
                 list = new System.Collections.Generic.List<string>();
             }
-            Plugin.log.LogInfo("Original String : " + Helpers.CustomEscape(str));
+            //Plugin.log.LogInfo("Original String : " + Helpers.CustomEscape(str));
 
             if (Plugin.UITextDict.ContainsKey(Helpers.CustomEscape(str)))
             {
-                Plugin.log.LogInfo("Found Match : " + Helpers.CustomUnescape(Plugin.UITextDict[Helpers.CustomEscape(str)]));
+                //Plugin.log.LogInfo("Found Match : " + Helpers.CustomUnescape(Plugin.UITextDict[Helpers.CustomEscape(str)]));
                 return Helpers.CustomUnescape(Plugin.UITextDict[Helpers.CustomEscape(str)]);
             }
             else
@@ -434,7 +437,7 @@ namespace TranslationENMOD
 
                 using (StreamWriter sw = new StreamWriter(path, append: true))
                 {
-                    Plugin.log.LogInfo("Wriring Untranslated String ... : " + Helpers.CustomEscape(str));
+                    //Plugin.log.LogInfo("Wriring Untranslated String ... : " + Helpers.CustomEscape(str));
                     if (!list.Contains(Helpers.CustomEscape(str)) && str != null)
                     {
                         if (Helpers.IsChinese(Helpers.CustomEscape(str)))

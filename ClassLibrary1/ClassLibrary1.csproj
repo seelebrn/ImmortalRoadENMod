@@ -71,6 +71,10 @@
     <Reference Include="Il2CppSystem.Core">
       <HintPath>..\..\BepInEx\unhollowed\Il2CppSystem.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Il2CppSystem.Xml, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\BepInEx\unhollowed\Il2CppSystem.Xml.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\灵墟\BepInEx\plugins\Newtonsoft.Json.dll</HintPath>
     </Reference>
