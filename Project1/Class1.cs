@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
@@ -166,6 +166,7 @@ namespace TranslationENMOD
                         //Plugin.log.LogInfo("Theoretical Position = " + (int)header.stringLiteralOffset + stringLiterals[i].dataIndex);
                         if (processbuffer.ContainsKey(Encoding.UTF8.GetString(bytes)) && Encoding.UTF8.GetString(bytes) == Encoding.UTF8.GetString(pos))
                         {
+
                             Plugin.log.LogInfo("uhoh : " + Encoding.UTF8.GetString(bytes) + " // " + Encoding.UTF8.GetString(pos));
                             
 
@@ -175,14 +176,18 @@ namespace TranslationENMOD
                             var pos2 = expectedArray;
                             Plugin.log.LogInfo("pos.length : " + pos.Length);
                             Plugin.log.LogInfo("pos2.length : " + pos2.Length);
-                            int lengthDifference = pos2.Length - pos.Length;
+
                             var oldByteLength = pos.Length;
                             var newByteLength = pos2.Length;
                             var startPosition = (long)header.stringLiteralDataOffset + (long)stringLiterals[i].dataIndex;
-                            stream.BaseStream.Seek((long)header.stringLiteralDataOffset + (long)stringLiterals[i].dataIndex, SeekOrigin.Begin);
-                            //stream.BaseStream.Write(pos2, 0, expectedArray.Length);
+
                             stream.BaseStream.Seek(startPosition, SeekOrigin.Begin);
-                            stream.BaseStream.Write(pos2, 0, newByteLength);
+                            byte[] originalBytes = new byte[oldByteLength];
+                            stream.BaseStream.Read(originalBytes, 0, oldByteLength);
+
+                            int lengthDifference = newByteLength - oldByteLength;
+                            stream.BaseStream.Seek(startPosition, SeekOrigin.Begin);
+                            //stream.BaseStream.Write(pos2, 0, newByteLength);
 
 
                             //
@@ -193,7 +198,7 @@ namespace TranslationENMOD
                                 byte[] buffer = new byte[-lengthDifference];
                                 stream.Read(buffer, 0, -lengthDifference);
                                 stream.BaseStream.Seek(startPosition + oldByteLength, SeekOrigin.Begin);
-                                stream.BaseStream.Write(buffer, 0, -lengthDifference);
+                                //stream.BaseStream.Write(buffer, 0, -lengthDifference);
                             }
                             // If the new bytes are longer than the original bytes, move the remaining bytes backward
                             else if (lengthDifference > 0)
@@ -202,13 +207,13 @@ namespace TranslationENMOD
                                 byte[] buffer = new byte[lengthDifference];
                                 stream.Read(buffer, 0, lengthDifference);
                                 stream.BaseStream.Seek(startPosition + newByteLength, SeekOrigin.Begin);
-                                stream.BaseStream.Write(buffer, 0, lengthDifference);
+                                //stream.BaseStream.Write(buffer, 0, lengthDifference);
                             }
 
                             //
 
                             Plugin.log.LogInfo("updated ? : " + Encoding.UTF8.GetString(bytes) + " // " + Encoding.UTF8.GetString(pos2));
-
+                            
                         }
 
 
