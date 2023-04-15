@@ -1,0 +1,159 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETStandard,Version=v2.1": {
+      "AssetRipper.VersionUtilities/1.4.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/AssetRipper.VersionUtilities.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/AssetRipper.VersionUtilities.dll": {}
+        }
+      },
+      "Newtonsoft.Json/13.0.3": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AssetRipper.VersionUtilities/1.4.0": {
+      "sha512": "SaswLF/xVadcVMgmZdec+8vUZSK7JxCv9xwp6mFW3wI36gV3ZmWgnJdHgmSWSXdj0ZxQWKMEfHrStjS45A8ihQ==",
+      "type": "package",
+      "path": "assetripper.versionutilities/1.4.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "assetripper.versionutilities.1.4.0.nupkg.sha512",
+        "assetripper.versionutilities.nuspec",
+        "lib/net35/AssetRipper.VersionUtilities.dll",
+        "lib/net35/VersionUtilities.xml",
+        "lib/net40/AssetRipper.VersionUtilities.dll",
+        "lib/net40/VersionUtilities.xml",
+        "lib/net5.0/AssetRipper.VersionUtilities.dll",
+        "lib/net5.0/VersionUtilities.xml",
+        "lib/net6.0/AssetRipper.VersionUtilities.dll",
+        "lib/net6.0/VersionUtilities.xml",
+        "lib/net7.0/AssetRipper.VersionUtilities.dll",
+        "lib/net7.0/VersionUtilities.xml",
+        "lib/netstandard2.0/AssetRipper.VersionUtilities.dll",
+        "lib/netstandard2.0/VersionUtilities.xml"
+      ]
+    },
+    "Newtonsoft.Json/13.0.3": {
+      "sha512": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ==",
+      "type": "package",
+      "path": "newtonsoft.json/13.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.md",
+        "README.md",
+        "lib/net20/Newtonsoft.Json.dll",
+        "lib/net20/Newtonsoft.Json.xml",
+        "lib/net35/Newtonsoft.Json.dll",
+        "lib/net35/Newtonsoft.Json.xml",
+        "lib/net40/Newtonsoft.Json.dll",
+        "lib/net40/Newtonsoft.Json.xml",
+        "lib/net45/Newtonsoft.Json.dll",
+        "lib/net45/Newtonsoft.Json.xml",
+        "lib/net6.0/Newtonsoft.Json.dll",
+        "lib/net6.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.0/Newtonsoft.Json.dll",
+        "lib/netstandard1.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.3/Newtonsoft.Json.dll",
+        "lib/netstandard1.3/Newtonsoft.Json.xml",
+        "lib/netstandard2.0/Newtonsoft.Json.dll",
+        "lib/netstandard2.0/Newtonsoft.Json.xml",
+        "newtonsoft.json.13.0.3.nupkg.sha512",
+        "newtonsoft.json.nuspec",
+        "packageIcon.png"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETStandard,Version=v2.1": [
+      "AssetRipper.VersionUtilities >= 1.4.0",
+      "Newtonsoft.Json >= 13.0.3"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\Cadenza\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\轮回修仙路\\Project1\\Project1\\Project1.csproj",
+      "projectName": "Project1",
+      "projectPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\轮回修仙路\\Project1\\Project1\\Project1.csproj",
+      "packagesPath": "C:\\Users\\Cadenza\\.nuget\\packages\\",
+      "outputPath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\轮回修仙路\\Project1\\Project1\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\Cadenza\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "netstandard2.1"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://nuget.bepinex.dev/v3/index.json": {}
+      },
+      "frameworks": {
+        "netstandard2.1": {
+          "targetAlias": "netstandard2.1",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netstandard2.1": {
+        "targetAlias": "netstandard2.1",
+        "dependencies": {
+          "AssetRipper.VersionUtilities": {
+            "target": "Package",
+            "version": "[1.4.0, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[13.0.3, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "NETStandard.Library": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}
