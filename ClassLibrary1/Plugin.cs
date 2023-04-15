@@ -1,20 +1,19 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.IL2CPP;
 using BepInEx.Logging;
 using HarmonyLib;
 using System.Reflection;
 using System.Xml.Linq;
-using UnhollowerRuntimeLib;
 using UnityEngine;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.IO;
-using BepInEx.IL2CPP.Utils.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Security.AccessControl;
 using System;
+using System.Runtime;
 using Il2CppSystem.Reflection;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
@@ -22,31 +21,28 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TMPro;
 using Il2CppSystem;
-using UnhollowerBaseLib.Runtime.VersionSpecific.AssemblyName;
 using Il2CppSystem.Linq;
-using UnhollowerBaseLib;
 using Il2CppSystem.Linq.Expressions;
 using TranslationENMOD;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
-using UnhollowerBaseLib.Runtime;
 using UnityEngine.SceneManagement;
 using System.Runtime.InteropServices;
-//using static MapIndex;
 using Microsoft.CSharp;
-//using static Il2CppSystem.Linq.Expressions.Interpreter.CastInstruction.CastInstructionNoT;
-using System.Linq;
 using KEngine;
 using DataLib;
 using KEngine.UI;
-using static KEngine.AssetFileLoader;
-using Il2CppSystem.Linq;
 using System.Xml;
 using SimpleJSON;
-using static Octree.OctreeElement;
-using Cpp2IlInjected;
-using static Il2CppSystem.Net.WebCompletionSource;
 using UnityEngine.UI;
 using Il2CppSystem.Resources;
+using LibCpp2IL;
+using LibCpp2IL.Metadata;
+using BepInEx.Unity.IL2CPP;
+using LibCpp2IL.Reflection;
+using UnityEngine.Profiling.Memory.Experimental;
+using AssetRipper.VersionUtilities.Extensions;
+using LibCpp2IL.BinaryStructures;
+using System.Diagnostics;
 
 namespace TranslationENMOD
 {
@@ -63,7 +59,35 @@ namespace TranslationENMOD
         public static Dictionary<string, string> TADict = new Dictionary<string, string>();
         public static List<string> UITextUn = new List<string>();
         public static Dictionary<string, string> UITextDict = new Dictionary<string, string>();
-
+        //Forbidden is a dict which role is to reverse wrongly translated AssetBundles Path.      
+        public static Dictionary<string,string> forbidden = new Dictionary<string, string>();
+        public static List<string> forbidden2= new List<string>()
+                    {
+                        "佩",
+                        "冠",
+                        "剑",
+                        "印",
+                        "囊",
+                        "坠",
+                        "履",
+                        "巾",
+                        "带",
+                        "帽",
+                        "幡",
+                        "戒",
+                        "指",
+                        "珠",
+                        "瓶",
+                        "甲",
+                        "盔",
+                        "簪",
+                        "腕",
+                        "衣",
+                        "衫",
+                        "袍",
+                        "镯",
+                        "靴"
+                    };
 
         public static bool clean = false;
         public static Il2CppSystem.Collections.Generic.List<Il2CppSystem.Reflection.FieldInfo> fields = new Il2CppSystem.Collections.Generic.List<Il2CppSystem.Reflection.FieldInfo>();
@@ -82,9 +106,26 @@ namespace TranslationENMOD
                 var pair = new KeyValuePair<string, string>(Regex.Replace(arr[0], @"\t|\n|\r", ""), arr[1]);
 
                 if (!dict.ContainsKey(pair.Key))
+                {
+                    string pattern = "_\\d$";
+                    
+                    if (!Regex.IsMatch(pair.Key, pattern) && !forbidden2.Contains(pair.Key))
+                    { 
                     dict.Add(pair.Key, pair.Value);
+                    }
+                    else
+                    {
+                        Plugin.log.LogInfo("Excluding string : " + pair.Key + " // Translation would be : " + pair.Value);
+                        if(!forbidden.ContainsKey(pair.Key))
+                        { 
+                        forbidden.Add(pair.Key, pair.Value);
+                        }
+                    }
+                }
                 else
-                    Debug.Log($"Found a duplicated line while parsing {dir}: {pair.Key}");
+                { 
+                    UnityEngine.Debug.Log($"Found a duplicated line while parsing {dir}: {pair.Key}");
+                }
 
             }
 
@@ -100,6 +141,9 @@ namespace TranslationENMOD
         }
         public override void Load()
         {
+            BepInEx.Logging.Logger.Sources.Add(log);
+
+            //MetadataExtractor.Extract("C:\\Program Files (x86)\\Steam\\steamapps\\common\\轮回修仙路\\轮回修仙路_Data\\il2cpp_data\\Metadata\\global-metadata.dat", "Xiaobi");
 
             if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "Dump", "TAKV.txt")))
             {
@@ -109,18 +153,48 @@ namespace TranslationENMOD
             {
                 File.Delete(Path.Combine(BepInEx.Paths.PluginPath, "Dump", "UITextKV.txt"));
             }
-            BepInEx.Logging.Logger.Sources.Add(log);
+
+
+
+
             TADict = FileToDictionary("TAKV.txt");
             UITextDict = FileToDictionary("UITextKV.txt");
             AddComponent<mbmb>();
             Plugin.log.LogInfo("Running Harmony Patches...");
             var harmony = new Harmony("Cadenza.GAME.ENMOD");
             Harmony.CreateAndPatchAll(System.Reflection.Assembly.GetExecutingAssembly(), null);
+            var unityversion = new AssetRipper.VersionUtilities.UnityVersion(2020, 3, 12);
+            var path = Path.Combine(Application.dataPath, "il2cpp_data", "Metadata", "global-metadata.dat");
+            var pepath = Path.Combine(BepInEx.Paths.GameRootPath, "GameAssembly.dll");
+            var bytearray = File.ReadAllBytes(path);
+            //Il2CppMetadata metadata = LibCpp2IL.Metadata.Il2CppMetadata.ReadFrom(bytearray, unityversion);
+
+            LibCpp2IlMain.LoadFromFile(pepath, path, unityversion);
+            var metadata = LibCpp2IlMain.TheMetadata;
+            var header = metadata.metadataHeader;
+            Plugin.log.LogInfo("Header String Count : " + header.stringLiteralCount);
+            for (int i = 0; i < header.stringLiteralCount; i++)
+            {
+                //Plugin.log.LogInfo("Testing stuff... : " + LibCpp2IlMain.TheMetadata.GetStringLiteralFromIndex((uint)i));
+            }
+
+            var fi = typeof(Il2CppMetadata).GetMembers(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance);
+            foreach(var field in fi)
+            {
+                Plugin.log.LogInfo(field.Name + " // " + field.MemberType);
+            }
+           
 
 
+            /*foreach(var sl in metadata.stringLiterals)
+            {
+                var array = metadata.ReadByteArrayAtRawAddress(metadata.metadataHeader.stringLiteralDataOffset + sl.dataIndex, (int)sl.length);
+                
+            }*/
 
-
-
+            var process = Process.GetProcessesByName("轮回修仙路").First();
+            var module = process.MainModule;
+            //module.BaseAddress()
 
         }
 
@@ -140,6 +214,7 @@ namespace TranslationENMOD
 
         private void Update()
         {
+
             if (Input.GetKeyDown(KeyCode.F1))
             {
                 var dir = new DirectoryInfo(Path.Combine(Application.dataPath)).GetFiles();
@@ -176,79 +251,79 @@ namespace TranslationENMOD
                     }
                 }
             }
+            if (Input.GetKeyDown(KeyCode.F2))
+            {
+                var path = Path.Combine(BepInEx.Paths.PluginPath, "Dump", "TAKV.txt");
+                using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path, append: true))
+                {
+
+                    foreach (var str in Helpers.TAUNList)
+                    {
+                        if (Helpers.IsChinese(str))
+                        {
+                            if(!Plugin.forbidden.ContainsKey(str))
+                            { 
+                            sw.Write(Helpers.CustomEscape(str) + System.Environment.NewLine);
+                            }
+
+
+                        }
+                    }
+                }
+            }
+            if (Input.GetKeyDown(KeyCode.F3))
+            {
+                Plugin.log.LogInfo("Current Scene : " + UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            }
+            if (Input.GetKeyDown(KeyCode.KeypadMinus))
+            {
+                var path = Path.Combine(BepInEx.Paths.PluginPath, "Dump", "NewTAKV.txt");
+
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path, append: true))
+                {
+                    foreach (var kvp in Plugin.TADict)
+                    {
+                        sw.Write(kvp.Key + "¤" + kvp.Value + System.Environment.NewLine);
+                    }
+                }
+            }
         }
+
     }
 
-    /*[HarmonyPatch(typeof(AssetBundleLoader), "OnFinish")]
-    static class Patch_AssetBundleLoader_OnFinish
+
+
+
+   
+
+    [HarmonyPatch(typeof(KEngine.AssetBundleLoader), "Load")]
+    static class FixIcons_Patch
     {
-        static void Postfix(AssetBundleLoader __instance,ref Il2CppSystem.Object resultObj)
+
+       
+
+        static void Postfix(ref string url)
         {
-            Plugin.log.LogInfo("Patch_AssetBundleLoader_OnFinish : " + resultObj.GetIl2CppType().Name);
-            foreach (var x in __instance.loadedObjs)
+            //Plugin.log.LogInfo("Relative URL : " + url);
+            if(url.Contains("equipitem"))
             {
-                Plugin.log.LogInfo("Patch_AssetBundleLoader_OnFinish__instance.loadedObjs : " + x.Value.assetBundle);
+                foreach(var x in Plugin.forbidden.Values)
+                { 
+                if(url.EndsWith("/" + x))
+                    {
+                        url = url.Replace("/" + x, "/" + Plugin.TADict.FirstOrDefault(y => y.Value == x).Key);
+                        //Plugin.log.LogInfo("Processed Relative URL : " + url);
+                    }
+                }
             }
         }
     }
-    [HarmonyPatch(typeof(AssetBundleLoader), "PushLoadedAsset")]
-    static class Patch_AssetBundleLoader_PushLoadedAsset
-    {
-        static void Postfix(ref UnityEngine.Object getAsset)
-        {
-            Plugin.log.LogInfo("Patch_AssetBundleLoader_PushLoadedAsset : " + getAsset.name);
-        }
-    }
 
-
-    [HarmonyPatch(typeof(KResourceModule), "LoadAssetsSync")]
-    class Patch_KResourceModule_LoadAssetsSync
-    {
-        static void Postfix(KResourceModule __instance, ref string path)
-        {
-            Plugin.log.LogInfo("Patch_KResourceModule_LoadAssetsSync : " + path);
-        }
-    }
-    [HarmonyPatch]
-    class Patch_RSELoader
-    {
-        static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
-        {
-            yield return AccessTools.Method(typeof(RseLoader), "LoadAsset", new System.Type[] { typeof(AbstractResourceLoader), typeof(string) }).MakeGenericMethod(typeof(UnityEngine.Object));
-            yield return AccessTools.Method(typeof(RseLoader), "LoadAsset", new System.Type[] { typeof(AssetBundle), typeof(string) }).MakeGenericMethod(typeof(UnityEngine.Object));
-
-        }
-        static void Postfix(RseLoader __instance)
-        {
-            Plugin.log.LogInfo("Berk ! " + __instance);
-        }
-    }*/
-    /*[HarmonyPatch]
-    class Patch_AssetFileBridgeDelegate
-    {
-        static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
-        {
-            yield return AccessTools.Method(typeof(AssetFileBridgeDelegate), "Invoke");
-            yield return AccessTools.Method(typeof(AssetFileBridgeDelegate), "BeginInvoke");
-
-        }
-        static void Prefix(AssetFileBridgeDelegate __instance, ref UnityEngine.Object resultObj)
-        {
-
-   
-        }*/
-
-
-    [HarmonyPatch(typeof(ResourceReader), "LoadString")]
-    class Patch_ResourceReader
-    {
-        static void Postfix(ResourceReader __instance, ref string __result)
-        {
-
-            Plugin.log.LogInfo(__result);
-
-        }
-    }
     [HarmonyPatch(typeof(UnityEngine.UI.Text), "OnEnable")]
     static class Patch_UnityEngineUIText
     {
@@ -273,7 +348,6 @@ namespace TranslationENMOD
         {
             try
             {
-
                 if (obj != null)
                 {
                     if (Helpers.IsChinese(obj.ToString()))
@@ -303,6 +377,7 @@ namespace TranslationENMOD
                                                 check = true;
 
                                             }
+
                                             //Plugin.log.LogInfo("Value = " + value);
                                             if (Plugin.TADict.ContainsKey(value))
                                             {
@@ -313,8 +388,11 @@ namespace TranslationENMOD
                                             {
                                                 if (!value.Contains("土之窍穴-") && !value.Contains("金之窍穴-") && !value.Contains("木之窍穴-") && !value.Contains("火之窍穴-") && !value.Contains("水之窍穴-"))
                                                 {
-                                                    //Plugin.log.LogInfo("Writing line to TAUn : " + value);
+                                                    if(!Plugin.forbidden.ContainsKey(value) && !Plugin.forbidden2.Contains(value))
+                                                    { 
+                                                    Plugin.log.LogInfo("Writing line to TAUn : " + value);
                                                     Helpers.AddItemToList(value, "TAKV");
+                                                    }
                                                 }
                                             }
 
@@ -328,7 +406,8 @@ namespace TranslationENMOD
             }
             catch (System.Exception e)
             {
-                Plugin.log.LogInfo("Exception :" + e);
+                Plugin.log.LogInfo("Exceptionzzzz :" + e);
+
                 Plugin.log.LogInfo("Exception Json :" + obj.ToString());
             }
             return check;
@@ -337,23 +416,27 @@ namespace TranslationENMOD
         static void Postfix(JSONNode __instance, ref JSONNode __result, ref string aJSON)
         {
 
-            if (aJSON != null)
+            if (aJSON != null && __result != null && __result.ToString() != "")
             {
                 if (Helpers.IsChinese(__result.ToString()))
                 {
+                    
+                    //Plugin.log.LogInfo(__result.ToString());
                     try
                     {
                         if (JsonPatching.check == true)
                         {
-                            Plugin.log.LogInfo("Check : " + __result.ToString());
+                            //Plugin.log.LogInfo("Check : " + __result.ToString());
                         }
+                        //Plugin.log.LogInfo("aJSON : " + aJSON);
                         ArrayIterate(__result, JsonPatching.check);
 
                     }
                     catch (System.Exception e)
                     {
-                        Plugin.log.LogInfo("Exception :" + e);
-                        Plugin.log.LogInfo("Exception Json :" + __result.ToString());
+
+                        Plugin.log.LogInfo("Exceptionzz :" + e);
+                        Plugin.log.LogInfo("aJSON : " + aJSON);
                     }
                 }
             }
@@ -369,8 +452,26 @@ namespace TranslationENMOD
             Plugin.log.LogInfo(eventStr);
         }
     }
+    class LengthComparer : IComparer<string>
+    {
+        public int Compare(string x, string y)
+        {
+            int lengthComparison = x.Length.CompareTo(y.Length);
+            if (lengthComparison == 0)
+            {
+                return x.CompareTo(y);
+            }
+            else
+            {
+                return lengthComparison;
+            }
+        }
+    }
     public static class Helpers
     {
+
+        public static List<string> TAUNList = new List<string>();
+
         public static string AddItemToList(string str, string file)
         {
 
@@ -392,22 +493,16 @@ namespace TranslationENMOD
             }
             else
             {
-
-                using (StreamWriter sw = new StreamWriter(path, append: true))
+                if (Helpers.IsChinese(str))
                 {
 
-                    if (!list.Contains(Helpers.CustomEscape(str)) && str != null)
-                    {
-                        if (Helpers.IsChinese(str))
-                        {
-
-                            sw.Write(Helpers.CustomEscape(str) + System.Environment.NewLine);
-                            list.Add(Helpers.CustomEscape(str));
-
-                        }
+                    if (!Plugin.forbidden.ContainsKey(str) && !Plugin.forbidden2.Contains(str))
+                    { 
+                    TAUNList.Add(Helpers.CustomEscape(str));
                     }
 
                 }
+              
                 return null;
             }
         }
@@ -481,7 +576,7 @@ namespace TranslationENMOD
                     if (!dict.ContainsKey(pair.Key))
                         dict.Add(pair.Key, pair.Value);
                     else
-                        Debug.Log($"Found a duplicated line while parsing {dir}: {pair.Key}");
+                        UnityEngine.Debug.Log($"Found a duplicated line while parsing {dir}: {pair.Key}");
 
 
                 }
@@ -552,10 +647,7 @@ namespace TranslationENMOD
                     break;
             }
         }
-        public static Il2CppSystem.Type GetILType<T>()
-        {
-            return UnhollowerRuntimeLib.Il2CppType.Of<T>();
-        }
+
     }
 
     public static class DictionaryExtensions
