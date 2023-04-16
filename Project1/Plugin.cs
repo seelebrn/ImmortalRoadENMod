@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using BepInEx.IL2CPP;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -141,7 +141,7 @@ namespace TranslationENMOD
         public override void Load()
         {
             BepInEx.Logging.Logger.Sources.Add(log);
-
+            
             //MetadataExtractor.Extract("C:\\Program Files (x86)\\Steam\\steamapps\\common\\轮回修仙路\\轮回修仙路_Data\\il2cpp_data\\Metadata\\global-metadata.dat", "Xiaobi");
 
             if (File.Exists(Path.Combine(BepInEx.Paths.PluginPath, "Dump", "TAKV.txt")))
@@ -159,12 +159,13 @@ namespace TranslationENMOD
             TADict = FileToDictionary("TAKV.txt");
             UITextDict = FileToDictionary("UITextKV.txt");
             Plugin.log.LogInfo("Processing Metadata...");
-            MetadataProcessing.ProcessMetadata();
-            AddComponent<mbmb>();
-            Plugin.log.LogInfo("Running Harmony Patches...");
+                        MetadataProcessing.ProcessMetadata();
+
             var harmony = new Harmony("Cadenza.GAME.ENMOD");
             Harmony.CreateAndPatchAll(System.Reflection.Assembly.GetExecutingAssembly(), null);
-
+            AddComponent<mbmb>();
+            Plugin.log.LogInfo("Running Harmony Patches...");
+            
         }
 
 
@@ -269,32 +270,21 @@ namespace TranslationENMOD
     }
 
 
-
-
-
-
-    [HarmonyPatch(typeof(KEngine.AssetBundleLoader), "Load")]
-    static class FixIcons_Patch
+    [HarmonyPatch(typeof(UIRoleImageView), "InitUI")]
+    static class Patch_NewCharacterScrollView
     {
-
-
-
-        static void Postfix(ref string url)
+        static void Postfix(UIRoleImageView __instance, ref UIRoleImageModel model, ref List<ExperienceBaseData> experienceBaseData)
         {
-            //Plugin.log.LogInfo("Relative URL : " + url);
-            if (url.Contains("equipitem"))
-            {
-                foreach (var x in Plugin.forbidden.Values)
-                {
-                    if (url.EndsWith("/" + x))
-                    {
-                        url = url.Replace("/" + x, "/" + Plugin.TADict.FirstOrDefault(y => y.Value == x).Key);
-                        //Plugin.log.LogInfo("Processed Relative URL : " + url);
-                    }
-                }
-            }
+            __instance.scrollRect.GetBounds().Expand(Screen.currentResolution.width - 100);
+           __instance.scrollRect.m_ViewBounds.extents.Set(Screen.currentResolution.width - 100, __instance.scrollRect.m_ViewBounds.m_Extents.y, __instance.scrollRect.m_ViewBounds.m_Extents.z);
+           // __instance.scrollRect.m_Elasticity = 2000;
+            //__instance.scrollRect.rectTransform.sizeDelta = new Vector2(1500, 33);
+
         }
     }
+
+
+   
 
     [HarmonyPatch(typeof(UnityEngine.UI.Text), "OnEnable")]
     static class Patch_UnityEngineUIText
@@ -324,7 +314,7 @@ namespace TranslationENMOD
                 {
                     if (Helpers.IsChinese(obj.ToString()))
                     {
-                        //Plugin.log.LogInfo("original.ToString() : " + obj.ToString());
+
                         //Plugin.log.LogInfo("obj.Count : " + obj.Count);
                         if (obj.Count > 0)
                         {
@@ -345,7 +335,6 @@ namespace TranslationENMOD
                                             var value = obj[i].ToString().Replace("\"", "");
                                             if (value == "八卦丹丹方")
                                             {
-                                                //Plugin.log.LogInfo("Found !");
                                                 check = true;
 
                                             }
@@ -362,7 +351,7 @@ namespace TranslationENMOD
                                                 {
                                                     if (!Plugin.forbidden.ContainsKey(value) && !Plugin.forbidden2.Contains(value))
                                                     {
-                                                        Plugin.log.LogInfo("Writing line to TAUn : " + value);
+                                                        //Plugin.log.LogInfo("Writing line to TAUn : " + value);
                                                         Helpers.AddItemToList(value, "TAKV");
                                                     }
                                                 }
