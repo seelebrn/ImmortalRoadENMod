@@ -20,6 +20,8 @@ using LibCpp2IL.Metadata;
 using BepInEx;
 using UnityEngine.Profiling.Memory.Experimental;
 using static Il2CppSystem.Globalization.CultureInfo;
+using System.Threading;
+//using Il2CppSystem.IO;
 
 namespace TranslationENMOD
 {
@@ -28,6 +30,7 @@ namespace TranslationENMOD
 
     internal static class MetadataProcessing
     {
+        public static int stringliteralcount = 0;
         public static Dictionary<string, string> processbuffer = new Dictionary<string, string>();
         static List<string> untranslated = new List<string>();
         public static string path = Path.Combine(Application.dataPath, "il2cpp_data", "Metadata", "global-metadata.dat");
@@ -47,7 +50,7 @@ namespace TranslationENMOD
 
             for (int i = 0; i < header.stringLiteralCount; i++)
             {
-                                try
+                try
                 {
                     var str = LibCpp2IlMain.TheMetadata.GetStringLiteralFromIndex((uint)i);
 
@@ -60,15 +63,12 @@ namespace TranslationENMOD
 
                         if (HasNoInvalidChars(finalstring))
                         {
-                            //Plugin.log.LogInfo("Metadata string ... : " + finalstring);
+                            Plugin.log.LogInfo("Metadata string ... : " + finalstring);
 
                             MetaDataReplace(finalstring, LibCpp2IlMain.TheMetadata.GetStringLiteralFromIndex((uint)i));
-                            foreach(var kvp in processbuffer)
-                            {
-                                //Plugin.log.LogInfo("Key : " + kvp.Key + " // Value : " + kvp.Value);
-                            }
+                           
 
-                            
+
                         }
 
                     }
@@ -77,13 +77,27 @@ namespace TranslationENMOD
                 {
 
                 }
+               
             }
             if (processbuffer.Count > 0)
             {
                 Plugin.log.LogInfo("ProcessBuffer Count : " + processbuffer.Count());
+                WriteToMetadata();
+                var content = File.ReadAllBytes(path + ".temp");
 
-                WriteToMetadata(header, metadata);
+                LibCpp2IlMain.LoadFromFile(pepath, path + ".temp", unityversion);
+                metadata = LibCpp2IlMain.TheMetadata;
+                
+                using(BinaryWriter bw = new BinaryWriter(File.Open(path, FileMode.Open)) )
+                {
+                    bw.BaseStream.Write(content, 0, content.Length);
+                }
+                File.Delete(path + ".temp");
+
+                
+
             }
+
             var pathMUN = Path.Combine(BepInEx.Paths.PluginPath, "Dump", "MetadataUN.txt");
             if (File.Exists(pathMUN))
             {
@@ -120,7 +134,7 @@ namespace TranslationENMOD
             {
                 if (Plugin.MetaDataDict.ContainsKey(str))
                 {
-                    var dest = Plugin.MetaDataDict[str].Replace("<lf>","\n");                  
+                    var dest = Plugin.MetaDataDict[str].Replace("<lf>", "\n");
                     processbuffer.Add(original, dest);
 
                 }
@@ -135,98 +149,189 @@ namespace TranslationENMOD
             }
             return str;
         }
-        public static void WriteToMetadata(Il2CppGlobalMetadataHeader header, Il2CppMetadata metadata)
+
+        /*public static void Processtxtbin()
         {
-            if(File.Exists(path + ".bak"))
+            var filme = File.ReadAllText(Path.Combine(BepInEx.Paths.PluginPath, "textbintxt", "text.bin.txt"));
+            
+            
+        }*/
+        public static int order = 0;
+        public static void Test(MetadataFile metadata)
+        {
+            bool isEdit = false;
+            for(int j=0;j< metadata.strBytes.Count();j++)
             {
-                File.Delete(path + ".bak");
-            }
-            Plugin.log.LogInfo("Creating a backup of your metadata in the relevant folder (adding a .bak extension)");
-            File.Copy(path, path + ".bak");
-
-            var sl = typeof(Il2CppMetadata).GetField("stringLiterals", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic).GetValue(metadata);
-            var stringLiterals = (Il2CppStringLiteral[])sl;
-           
-
-            var destStream = System.IO.File.Create(path + ".new");
-            using (BinaryReader stream = new BinaryReader(new FileStream(path, FileMode.Open)))
-            {
-                for (int i = 1; i < header.stringLiteralCount; i++)
-                {
-                    byte[] verifyArray = new byte[stringLiterals[i].length];
-
-                    var bytes = Encoding.UTF8.GetBytes(LibCpp2IlMain.TheMetadata.GetStringLiteralFromIndex((uint)i));
-                    //Plugin.log.LogInfo("Byte Translation : " + bytes.ToStringEnumerable());
-                    try
-                    {
-                        stream.BaseStream.Seek((long)header.stringLiteralDataOffset + (long)stringLiterals[i].dataIndex, SeekOrigin.Begin);
-
-                        var pos = stream.ReadBytes((int)stringLiterals[i].length);
-                        //Plugin.log.LogInfo("Current Position = " + (int)stream.BaseStream.Position);
-                        //Plugin.log.LogInfo("Theoretical Position = " + (int)header.stringLiteralOffset + stringLiterals[i].dataIndex);
-                        if (processbuffer.ContainsKey(Encoding.UTF8.GetString(bytes)) && Encoding.UTF8.GetString(bytes) == Encoding.UTF8.GetString(pos))
-                        {
-
-                            Plugin.log.LogInfo("uhoh : " + Encoding.UTF8.GetString(bytes) + " // " + Encoding.UTF8.GetString(pos));
-                            
-
-                            Plugin.log.LogInfo("Found");
-                            byte[] expectedArray = Encoding.UTF8.GetBytes(processbuffer[Encoding.UTF8.GetString(bytes)]);
-
-                            var pos2 = expectedArray;
-                            Plugin.log.LogInfo("pos.length : " + pos.Length);
-                            Plugin.log.LogInfo("pos2.length : " + pos2.Length);
-
-                            var oldByteLength = pos.Length;
-                            var newByteLength = pos2.Length;
-                            var startPosition = (long)header.stringLiteralDataOffset + (long)stringLiterals[i].dataIndex;
-
-                            stream.BaseStream.Seek(startPosition, SeekOrigin.Begin);
-                            byte[] originalBytes = new byte[oldByteLength];
-                            stream.BaseStream.Read(originalBytes, 0, oldByteLength);
-
-                            int lengthDifference = newByteLength - oldByteLength;
-                            stream.BaseStream.Seek(startPosition, SeekOrigin.Begin);
-                            //stream.BaseStream.Write(pos2, 0, newByteLength);
-
-
-                            //
-
-                            if (lengthDifference < 0)
-                            {
-                                stream.BaseStream.Seek(startPosition + newByteLength, SeekOrigin.Begin);
-                                byte[] buffer = new byte[-lengthDifference];
-                                stream.Read(buffer, 0, -lengthDifference);
-                                stream.BaseStream.Seek(startPosition + oldByteLength, SeekOrigin.Begin);
-                                //stream.BaseStream.Write(buffer, 0, -lengthDifference);
-                            }
-                            // If the new bytes are longer than the original bytes, move the remaining bytes backward
-                            else if (lengthDifference > 0)
-                            {
-                                stream.BaseStream.Seek(startPosition + oldByteLength, SeekOrigin.Begin);
-                                byte[] buffer = new byte[lengthDifference];
-                                stream.Read(buffer, 0, lengthDifference);
-                                stream.BaseStream.Seek(startPosition + newByteLength, SeekOrigin.Begin);
-                                //stream.BaseStream.Write(buffer, 0, lengthDifference);
-                            }
-
-                            //
-
-                            Plugin.log.LogInfo("updated ? : " + Encoding.UTF8.GetString(bytes) + " // " + Encoding.UTF8.GetString(pos2));
-                            
-                        }
-
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Plugin.log.LogInfo(ex.ToString());
-                    }
-
+                var item = metadata.strBytes[j];
+                if (processbuffer.ContainsKey(Encoding.UTF8.GetString(metadata.strBytes[j])))
+                { 
+                isEdit = true;
 
                 }
-                stream.Close();
+                else
+                {
+                    isEdit = false;
+                }
+            
+            if (isEdit)
+            {
+            var NewStrBytes = Encoding.UTF8.GetBytes(processbuffer[Encoding.UTF8.GetString(item)]);
+
+            var o = item as object;
+            metadata.strBytes[j] = NewStrBytes;
             }
+            else
+            {
+               
+            }
+            }
+        }
+
+        public static void hmmm()
+        {
+            var x = new MetadataFile(path);
+            foreach(var k in x.strBytes)
+            {
+
+            }
+        }
+        public static void WriteToMetadata()
+        {
+            var path = Path.Combine(Application.dataPath, "il2cpp_data", "Metadata", "global-metadata.dat");
+            var metadata = new MetadataFile(path);
+            Test(metadata);
+            metadata.WriteToNewFile(path);
+
+        }
+    }
+
+    
+     public class MetadataFile : IDisposable
+    {
+        public BinaryReader reader;
+
+        private uint stringLiteralOffset;
+        private uint stringLiteralCount;
+        private long DataInfoPosition;
+        private uint stringLiteralDataOffset;
+        private uint stringLiteralDataCount;
+        private List<StringLiteral> stringLiterals = new List<StringLiteral>();
+        public List<byte[]> strBytes = new List<byte[]>();
+        
+
+        public MetadataFile(string fullName)
+        {
+            reader = new BinaryReader(File.OpenRead(fullName));
+
+             ReadHeader();
+
+             ReadLiteral();
+             ReadStrByte();
+
+        }
+
+        private void ReadHeader()
+        {
+            uint vansity = reader.ReadUInt32();
+            if (vansity != 0xFAB11BAF)
+            {
+                throw new Exception("标志检查不通过");
+            }
+            int version = reader.ReadInt32();
+            stringLiteralOffset = reader.ReadUInt32();     
+            stringLiteralCount = reader.ReadUInt32();      
+            DataInfoPosition = reader.BaseStream.Position; 
+            stringLiteralDataOffset = reader.ReadUInt32(); 
+            stringLiteralDataCount = reader.ReadUInt32();   
+        }
+
+        private void ReadLiteral()
+        {
+
+            reader.BaseStream.Position = stringLiteralOffset;
+            for (int i = 0; i < stringLiteralCount / 8; i++)
+            {
+                stringLiterals.Add(new StringLiteral
+                {
+                    Length = reader.ReadUInt32(),
+                    Offset = reader.ReadUInt32()
+                });
+            }
+        }
+
+        private void ReadStrByte()
+        {
+
+            for (int i = 0; i < stringLiterals.Count; i++)
+            {
+                reader.BaseStream.Position = stringLiteralDataOffset + stringLiterals[i].Offset;
+                strBytes.Add(reader.ReadBytes((int)stringLiterals[i].Length));
+            }
+        }
+
+        public void WriteToNewFile(string fileName)
+        {
+            BinaryWriter writer = new BinaryWriter(File.Create(fileName + ".temp"));
+
+            // 先全部复制过去
+            reader.BaseStream.Position = 0;
+            reader.BaseStream.CopyTo(writer.BaseStream);
+
+            // 更新Literal
+            writer.BaseStream.Position = stringLiteralOffset;
+            uint count = 0;
+            for (int i = 0; i < stringLiterals.Count; i++)
+            {
+
+                stringLiterals[i].Offset = count;
+                stringLiterals[i].Length = (uint)strBytes[i].Length;
+
+                writer.Write(stringLiterals[i].Length);
+                writer.Write(stringLiterals[i].Offset);
+                count += stringLiterals[i].Length;
+
+            }
+
+            // 进行一次对齐，不确定是否一定需要，但是Unity是做了，所以还是补上为好
+            var tmp = (stringLiteralDataOffset + count) % 4;
+            if (tmp != 0) count += 4 - tmp;
+
+            // 检查是否够空间放置
+            if (count > stringLiteralDataCount)
+            {
+                // 检查数据区后面还有没有别的数据，没有就可以直接延长数据区
+                if (stringLiteralDataOffset + stringLiteralDataCount < writer.BaseStream.Length)
+                {
+                    // 原有空间不够放，也不能直接延长，所以整体挪到文件尾
+                    stringLiteralDataOffset = (uint)writer.BaseStream.Length;
+                }
+            }
+            stringLiteralDataCount = count;
+
+            // 写入string
+            writer.BaseStream.Position = stringLiteralDataOffset;
+            for (int i = 0; i < strBytes.Count; i++)
+            {
+                writer.Write(strBytes[i]);
+            }
+
+            // 更新头部
+            writer.BaseStream.Position = DataInfoPosition;
+            writer.Write(stringLiteralDataOffset);
+            writer.Write(stringLiteralDataCount);
+
+            writer.Close();
+        }
+
+        public void Dispose()
+        {
+            reader?.Dispose();
+        }
+
+        public class StringLiteral
+        {
+            public uint Length;
+            public uint Offset;
         }
     }
 }
