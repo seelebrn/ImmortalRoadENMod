@@ -1,4 +1,4 @@
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.IL2CPP;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -22,12 +22,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TMPro;
 using Il2CppSystem;
-using Il2CppSystem.Linq;
-using Il2CppSystem.Linq.Expressions;
 using TranslationENMOD;
-using BepInEx.Unity.IL2CPP.Utils.Collections;
+using BepInEx.IL2CPP.Utils.Collections;
 using UnityEngine.SceneManagement;
-using System.Runtime.InteropServices;
 using Microsoft.CSharp;
 using KEngine;
 using DataLib;
@@ -36,16 +33,12 @@ using System.Xml;
 using SimpleJSON;
 using UnityEngine.UI;
 using Il2CppSystem.Resources;
-using LibCpp2IL;
-using LibCpp2IL.Metadata;
-using BepInEx.Unity.IL2CPP;
-using LibCpp2IL.Reflection;
 using UnityEngine.Profiling.Memory.Experimental;
 using AssetRipper.VersionUtilities.Extensions;
-using LibCpp2IL.BinaryStructures;
 using System.Diagnostics;
 using SevenZip.Buffer;
 using System.Text;
+using UnityEngine.Rendering;
 
 namespace TranslationENMOD
 {
@@ -165,7 +158,8 @@ namespace TranslationENMOD
             Harmony.CreateAndPatchAll(System.Reflection.Assembly.GetExecutingAssembly(), null);
             AddComponent<mbmb>();
             Plugin.log.LogInfo("Running Harmony Patches...");
-            
+
+
         }
 
 
@@ -270,21 +264,8 @@ namespace TranslationENMOD
     }
 
 
-    [HarmonyPatch(typeof(UIRoleImageView), "InitUI")]
-    static class Patch_NewCharacterScrollView
-    {
-        static void Postfix(UIRoleImageView __instance, ref UIRoleImageModel model, ref List<ExperienceBaseData> experienceBaseData)
-        {
-            __instance.scrollRect.GetBounds().Expand(Screen.currentResolution.width - 100);
-           __instance.scrollRect.m_ViewBounds.extents.Set(Screen.currentResolution.width - 100, __instance.scrollRect.m_ViewBounds.m_Extents.y, __instance.scrollRect.m_ViewBounds.m_Extents.z);
-           // __instance.scrollRect.m_Elasticity = 2000;
-            //__instance.scrollRect.rectTransform.sizeDelta = new Vector2(1500, 33);
+        
 
-        }
-    }
-
-
-   
 
     [HarmonyPatch(typeof(UnityEngine.UI.Text), "OnEnable")]
     static class Patch_UnityEngineUIText
@@ -320,7 +301,7 @@ namespace TranslationENMOD
                         {
                             for (int i = 0; i < obj.Count; i++)
                             {
-                                if (obj.Childs.Count() > 0)
+                                if (obj.Childs != null)
                                 {
                                     //Plugin.log.LogInfo("    Child.ToString() : " + obj[i].ToString());
                                     //Plugin.log.LogInfo("    Child.Count : " + obj[i].Count);

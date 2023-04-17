@@ -11,13 +11,13 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("Project1")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("RTRENMOD")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("My first plugin")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
-[assembly: System.Reflection.AssemblyProductAttribute("Project1")]
-[assembly: System.Reflection.AssemblyTitleAttribute("Project1")]
+[assembly: System.Reflection.AssemblyProductAttribute("RTRENMOD")]
+[assembly: System.Reflection.AssemblyTitleAttribute("RTRENMOD")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 
 // Généré par la classe MSBuild WriteCodeFragment.

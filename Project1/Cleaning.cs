@@ -24,9 +24,7 @@ using Newtonsoft.Json.Linq;
 using TMPro;
 using Il2CppSystem;
 
-using Il2CppSystem.Linq;
 
-using Il2CppSystem.Linq.Expressions;
 using TranslationENMOD;
 
 namespace TranslationENMOD

@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using AssetsTools.NET.Cpp2IL;
-using Il2CppSystem.Linq.Expressions;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
 using SevenZip.Compression.LZMA;
